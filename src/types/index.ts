@@ -2,7 +2,7 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  status: "todo" | "in-progress" | "blocked" | "done";
+  status: "todo" | "in-progress" | "done" | "approved";
   priority: "low" | "medium" | "high" | "critical";
   deadline?: Date;
   tags: string[];

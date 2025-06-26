@@ -38,13 +38,13 @@ import {
   AlertCircle,
   CheckCircle,
   Circle,
-  Pause,
   MoreHorizontal,
   Edit,
   Trash2,
   PlayCircle,
   X,
   Search,
+  Check,
 } from "lucide-react";
 import { Task } from "@/types";
 
@@ -146,8 +146,8 @@ const priorityColors = {
 const statusIcons = {
   todo: Circle,
   "in-progress": Timer,
-  blocked: Pause,
   done: CheckCircle,
+  approved: Check,
 };
 
 function TaskCard({
@@ -173,8 +173,8 @@ function TaskCard({
                 const statuses: Task["status"][] = [
                   "todo",
                   "in-progress",
-                  "blocked",
                   "done",
+                  "approved",
                 ];
                 const currentIndex = statuses.indexOf(task.status);
                 const nextStatus =
@@ -292,8 +292,8 @@ function KanbanView({
   const columns = [
     { id: "todo", title: "To Do", status: "todo" as const },
     { id: "in-progress", title: "In Progress", status: "in-progress" as const },
-    { id: "blocked", title: "Blocked", status: "blocked" as const },
     { id: "done", title: "Done", status: "done" as const },
+    { id: "approved", title: "Approved", status: "approved" as const },
   ];
 
   return (
@@ -702,12 +702,12 @@ export default function Tasks() {
       prev.map((task) => {
         if (task.id === taskId) {
           const progress =
-            newStatus === "done"
+            newStatus === "approved"
               ? 100
-              : newStatus === "in-progress"
-                ? 50
-                : newStatus === "blocked"
-                  ? 25
+              : newStatus === "done"
+                ? 80
+                : newStatus === "in-progress"
+                  ? 50
                   : 0;
           return {
             ...task,
@@ -854,8 +854,8 @@ export default function Tasks() {
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="todo">To Do</SelectItem>
                     <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="blocked">Blocked</SelectItem>
                     <SelectItem value="done">Done</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
@@ -979,8 +979,8 @@ export default function Tasks() {
                       <SelectContent>
                         <SelectItem value="todo">To Do</SelectItem>
                         <SelectItem value="in-progress">In Progress</SelectItem>
-                        <SelectItem value="blocked">Blocked</SelectItem>
                         <SelectItem value="done">Done</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1119,8 +1119,8 @@ export default function Tasks() {
                       <SelectContent>
                         <SelectItem value="todo">To Do</SelectItem>
                         <SelectItem value="in-progress">In Progress</SelectItem>
-                        <SelectItem value="blocked">Blocked</SelectItem>
                         <SelectItem value="done">Done</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
