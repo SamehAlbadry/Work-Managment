@@ -11,7 +11,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, Square, RotateCcw } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Play, Pause, Square, RotateCcw, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PomodoroSession {
@@ -26,11 +41,13 @@ interface PomodoroSession {
 type TimerState = "idle" | "running" | "paused" | "completed";
 
 export default function Pomodoro() {
+  const [pomodoroMinutes, setPomodoroMinutes] = useState(25);
   const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
   const [timerState, setTimerState] = useState<TimerState>("idle");
   const [currentSession, setCurrentSession] =
     useState<Partial<PomodoroSession> | null>(null);
   const [showTaskDialog, setShowTaskDialog] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [taskDescription, setTaskDescription] = useState("");
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
 
@@ -41,22 +58,22 @@ export default function Pomodoro() {
   };
 
   const resetTimer = useCallback(() => {
-    setTimeLeft(25 * 60);
+    setTimeLeft(pomodoroMinutes * 60);
     setTimerState("idle");
     setCurrentSession(null);
-  }, []);
+  }, [pomodoroMinutes]);
 
   const startTimer = useCallback(() => {
     if (timerState === "idle") {
       setCurrentSession({
         id: Date.now().toString(),
         startTime: new Date(),
-        duration: 25 * 60,
+        duration: pomodoroMinutes * 60,
         completed: false,
       });
     }
     setTimerState("running");
-  }, [timerState]);
+  }, [timerState, pomodoroMinutes]);
 
   const pauseTimer = useCallback(() => {
     setTimerState("paused");
@@ -76,7 +93,7 @@ export default function Pomodoro() {
         id: currentSession.id!,
         startTime: currentSession.startTime!,
         endTime: new Date(),
-        duration: 25 * 60 - timeLeft,
+        duration: pomodoroMinutes * 60 - timeLeft,
         task: taskDescription.trim(),
         completed: true,
       };
@@ -86,7 +103,7 @@ export default function Pomodoro() {
       setShowTaskDialog(false);
       resetTimer();
     }
-  }, [currentSession, taskDescription, timeLeft, resetTimer]);
+  }, [currentSession, taskDescription, timeLeft, resetTimer, pomodoroMinutes]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -102,7 +119,15 @@ export default function Pomodoro() {
     return () => clearInterval(interval);
   }, [timerState, timeLeft, endSession]);
 
-  const progress = ((25 * 60 - timeLeft) / (25 * 60)) * 100;
+  const progress =
+    ((pomodoroMinutes * 60 - timeLeft) / (pomodoroMinutes * 60)) * 100;
+
+  // Update timeLeft when duration changes and timer is idle
+  useEffect(() => {
+    if (timerState === "idle") {
+      setTimeLeft(pomodoroMinutes * 60);
+    }
+  }, [pomodoroMinutes, timerState]);
 
   return (
     <Layout>
@@ -170,6 +195,21 @@ export default function Pomodoro() {
               </div>
             </div>
 
+            {/* Duration Settings */}
+            {timerState === "idle" && (
+              <div className="mb-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSettingsDialog(true)}
+                  className="gap-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  {pomodoroMinutes} min
+                </Button>
+              </div>
+            )}
+
             {/* Timer Controls */}
             <div className="flex items-center justify-center gap-3">
               {timerState === "idle" || timerState === "paused" ? (
@@ -236,31 +276,84 @@ export default function Pomodoro() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium">{session.task}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {session.startTime.toLocaleTimeString()} -{" "}
-                        {session.endTime.toLocaleTimeString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant="secondary">
-                        {Math.round(session.duration / 60)}m
-                      </Badge>
-                      <div className="w-3 h-3 rounded-full bg-success" />
-                    </div>
-                  </div>
-                ))}
+              <div className="rounded-lg border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-32">Date</TableHead>
+                      <TableHead className="w-24">From</TableHead>
+                      <TableHead className="w-24">To</TableHead>
+                      <TableHead>Description</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sessions.map((session) => (
+                      <TableRow
+                        key={session.id}
+                        className="hover:bg-secondary/50"
+                      >
+                        <TableCell className="font-medium">
+                          {session.startTime.toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          {session.startTime.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          {session.endTime.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </TableCell>
+                        <TableCell>{session.task}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Duration Settings Dialog */}
+        <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Timer Settings</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <div>
+                <Label htmlFor="duration">Pomodoro Duration</Label>
+                <Select
+                  value={pomodoroMinutes.toString()}
+                  onValueChange={(value) => setPomodoroMinutes(parseInt(value))}
+                >
+                  <SelectTrigger className="mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="15">15 minutes</SelectItem>
+                    <SelectItem value="20">20 minutes</SelectItem>
+                    <SelectItem value="25">25 minutes</SelectItem>
+                    <SelectItem value="30">30 minutes</SelectItem>
+                    <SelectItem value="45">45 minutes</SelectItem>
+                    <SelectItem value="60">60 minutes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-3 pt-4">
+                <Button
+                  onClick={() => setShowSettingsDialog(false)}
+                  className="flex-1"
+                >
+                  Save Settings
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Task Description Dialog */}
         <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
